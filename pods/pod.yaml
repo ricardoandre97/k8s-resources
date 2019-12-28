@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podtest2
+spec:
+  containers:
+  - name: cont1
+    image: nginx:alpine
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podtest3
+spec:
+  containers:
+  - name: cont1
+    image: nginx:alpine
