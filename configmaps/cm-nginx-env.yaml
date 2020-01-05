@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  labels:
+    app: front
+data:
+  nginx: |
+    server {
+        listen       9090;
+        server_name  localhost;
+
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+        }
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/share/nginx/html;
+        }
+
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vars
+  labels:
+    app: front
+data:
+  db_host: dev.host.local
+  db_user: dev_user
+  script: |
+    echo DB host es $DB_HOST y DB user es $DB_USER > /usr/share/nginx/html/test.html
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-test
+  labels:
+    app: front
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: front
+  template:
+    metadata:
+      labels:
+        app: front
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: vars
+                  key: db_host
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: vars
+                  key: db_user
+          volumeMounts:
+          - name: nginx-vol
+            mountPath: /etc/nginx/conf.d
+          - name: script-vol
+            mountPath: /opt
+      volumes:
+        - name: nginx-vol
+          configMap:
+            name: nginx-config
+            items:
+            - key: nginx
+              path: default.conf
+        - name: script-vol
+          configMap:
+            name: vars
+            items:
+            - key: script
+              path: script.sh
+
+            
