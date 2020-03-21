@@ -1,0 +1,18 @@
+## RBAC
+minikube start --vm-driver=none  --extra-config=apiserver.authorization-mode=RBAC
+
+## Create keys and sign
+openssl genrsa -out ricardo.key 2048
+openssl req -new -key ricardo.key -out ricardo.csr -subj "/CN=ricardo/O=dev"
+sudo openssl x509 -req -in ricardo.csr -CA /root/.minikube/ca.crt -CAkey /root/.minikube/ca.key -CAcreateserial -out ricardo.crt -days 500
+openssl x509 -in  ricardo.crt  -noout -text
+
+## Isolated env
+kubectl config view  | grep server
+docker run --rm -ti -v $PWD:/test -w /test  -v /root/.minikube/ca.crt:/ca.crt -v /usr/bin/kubectl:/usr/bin/kubectl alpine sh
+
+## Configure kubectl for user
+kubectl config set-cluster minikube --server=https://192.168.1.140:8443 --certificate-authority=/ca.crt
+kubectl config set-credentials ricardo --client-certificate=ricardo.crt --client-key=ricardo.key
+kubectl config set-context ricardo --cluster=minikube --user=ricardo
+kubectl config use-context ricardo
