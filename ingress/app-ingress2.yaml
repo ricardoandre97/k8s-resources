@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deplo
+  labels:
+    app: api-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-server
+  template:
+    metadata:
+      labels:
+        app: api-server
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        command: ["sh", "-c", "echo Soy app numero 2 desde $HOSTNAME > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-server-svc
+  labels:
+    app: api-server
+spec:
+  type: ClusterIP
+  selector:
+    app: api-server
+  ports:
+    - protocol: TCP
+      port: 9090
+      targetPort: 80
